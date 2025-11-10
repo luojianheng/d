@@ -1,0 +1,499 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>单词消消乐</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            background: linear-gradient(135deg, #fffacd, #f0e68c);
+            font-family: 'Arial', sans-serif;
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding: 10px;
+        }
+
+        .title {
+            font-size: 2.5rem;
+            color: #ff6b35;
+            text-shadow: 3px 3px 6px rgba(0,0,0,0.3);
+            margin: 20px 0;
+            font-weight: bold;
+            text-align: center;
+        }
+
+        .game-info {
+            display: flex;
+            justify-content: space-between;
+            width: 90%;
+            max-width: 600px;
+            margin-bottom: 20px;
+            font-size: 1.2rem;
+            font-weight: bold;
+            color: #333;
+        }
+
+        .game-container {
+            width: 90%;
+            max-width: 600px;
+            display: grid;
+            grid-template-columns: repeat(6, 1fr);
+            grid-template-rows: repeat(3, 1fr);
+            gap: 15px;
+            margin: 20px 0;
+            padding: 20px;
+        }
+
+        .bubble {
+            aspect-ratio: 1;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            text-align: center;
+            cursor: pointer;
+            font-size: 0.9rem;
+            font-weight: bold;
+            color: white;
+            text-shadow: 1px 1px 2px rgba(0,0,0,0.5);
+            transition: all 0.3s ease;
+            box-shadow: 
+                0 8px 16px rgba(0,0,0,0.2),
+                inset 0 4px 8px rgba(255,255,255,0.3),
+                inset 0 -4px 8px rgba(0,0,0,0.1);
+            position: relative;
+            user-select: none;
+            padding: 8px;
+            word-wrap: break-word;
+            line-height: 1.2;
+            min-height: 70px;
+        }
+
+        .bubble::before {
+            content: '';
+            position: absolute;
+            top: 15%;
+            left: 20%;
+            width: 30%;
+            height: 30%;
+            background: radial-gradient(ellipse at center, rgba(255,255,255,0.6) 0%, transparent 70%);
+            border-radius: 50%;
+            pointer-events: none;
+        }
+
+        .bubble:hover {
+            transform: translateY(-3px) scale(1.05);
+            box-shadow: 
+                0 12px 24px rgba(0,0,0,0.3),
+                inset 0 4px 8px rgba(255,255,255,0.4),
+                inset 0 -4px 8px rgba(0,0,0,0.1);
+        }
+
+        .bubble.selected {
+            transform: scale(1.1);
+            box-shadow: 
+                0 0 20px rgba(255,215,0,0.8),
+                0 8px 16px rgba(0,0,0,0.2),
+                inset 0 4px 8px rgba(255,255,255,0.3);
+            border: 3px solid #ffd700;
+        }
+
+        .bubble.matched {
+            animation: disappear 0.5s ease-out forwards;
+        }
+
+        @keyframes disappear {
+            0% {
+                transform: scale(1);
+                opacity: 1;
+            }
+            50% {
+                transform: scale(1.2);
+                opacity: 0.5;
+            }
+            100% {
+                transform: scale(0);
+                opacity: 0;
+            }
+        }
+
+        .success-modal {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0,0,0,0.8);
+            display: none;
+            align-items: center;
+            justify-content: center;
+            z-index: 1000;
+        }
+
+        .success-content {
+            background: linear-gradient(135deg, #fffacd, #f0e68c);
+            padding: 40px;
+            border-radius: 20px;
+            text-align: center;
+            box-shadow: 0 20px 40px rgba(0,0,0,0.3);
+            border: 3px solid #ff6b35;
+            max-width: 90%;
+            width: 400px;
+        }
+
+        .success-title {
+            font-size: 2rem;
+            color: #ff6b35;
+            margin-bottom: 20px;
+            font-weight: bold;
+        }
+
+        .success-time {
+            font-size: 1.3rem;
+            color: #333;
+            margin-bottom: 30px;
+            font-weight: bold;
+        }
+
+        .continue-btn {
+            background: linear-gradient(135deg, #ff6b35, #ff8c42);
+            color: white;
+            border: none;
+            padding: 15px 30px;
+            font-size: 1.2rem;
+            font-weight: bold;
+            border-radius: 25px;
+            cursor: pointer;
+            box-shadow: 0 4px 8px rgba(0,0,0,0.2);
+            transition: all 0.3s ease;
+        }
+
+        .continue-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 12px rgba(0,0,0,0.3);
+        }
+
+        /* 手机适配 */
+        @media (max-width: 768px) {
+            .title {
+                font-size: 2rem;
+                margin: 15px 0;
+            }
+
+            .game-container {
+                grid-template-columns: repeat(3, 1fr);
+                grid-template-rows: repeat(6, 1fr);
+                gap: 12px;
+                padding: 15px;
+            }
+
+            .bubble {
+                font-size: 0.8rem;
+                min-height: 60px;
+                padding: 6px;
+            }
+
+            .game-info {
+                font-size: 1rem;
+                flex-direction: column;
+                gap: 10px;
+                text-align: center;
+            }
+
+            .success-content {
+                padding: 30px 20px;
+            }
+
+            .success-title {
+                font-size: 1.5rem;
+            }
+
+            .success-time {
+                font-size: 1.1rem;
+            }
+        }
+
+        @media (max-width: 480px) {
+            .game-container {
+                gap: 10px;
+                padding: 10px;
+            }
+
+            .bubble {
+                font-size: 0.75rem;
+                min-height: 55px;
+                padding: 5px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <h1 class="title">🎮 单词消消乐 🎮</h1>
+    
+    <div class="game-info">
+        <div>⏰ 用时: <span id="timer">00:00</span></div>
+        <div>🎯 进度: <span id="progress">0/6</span></div>
+    </div>
+
+    <div class="game-container" id="gameContainer">
+        <!-- 泡泡将通过JavaScript动态生成 -->
+    </div>
+
+    <!-- 成功弹窗 -->
+    <div class="success-modal" id="successModal">
+        <div class="success-content">
+            <div class="success-title">🎉 恭喜你挑战成功！ 🎉</div>
+            <div class="success-time" id="successTime"></div>
+            <button class="continue-btn" onclick="startNewGame()">继续挑战</button>
+        </div>
+    </div>
+
+    <script>
+        // 小升初单词库
+        const wordPairs = [
+            // 第一组
+            [{en: "apple", zh: "苹果"}, {en: "book", zh: "书"}, {en: "cat", zh: "猫"}, {en: "dog", zh: "狗"}, {en: "egg", zh: "鸡蛋"}, {en: "fish", zh: "鱼"}],
+            // 第二组
+            [{en: "house", zh: "房子"}, {en: "water", zh: "水"}, {en: "tree", zh: "树"}, {en: "flower", zh: "花"}, {en: "sun", zh: "太阳"}, {en: "moon", zh: "月亮"}],
+            // 第三组
+            [{en: "car", zh: "汽车"}, {en: "ball", zh: "球"}, {en: "bird", zh: "鸟"}, {en: "cake", zh: "蛋糕"}, {en: "milk", zh: "牛奶"}, {en: "rice", zh: "米饭"}],
+            // 第四组
+            [{en: "school", zh: "学校"}, {en: "teacher", zh: "老师"}, {en: "student", zh: "学生"}, {en: "friend", zh: "朋友"}, {en: "family", zh: "家庭"}, {en: "love", zh: "爱"}],
+            // 第五组
+            [{en: "music", zh: "音乐"}, {en: "dance", zh: "跳舞"}, {en: "smile", zh: "微笑"}, {en: "happy", zh: "快乐的"}, {en: "sad", zh: "悲伤的"}, {en: "good", zh: "好的"}],
+            // 第六组
+            [{en: "red", zh: "红色的"}, {en: "blue", zh: "蓝色的"}, {en: "green", zh: "绿色的"}, {en: "yellow", zh: "黄色的"}, {en: "big", zh: "大的"}, {en: "small", zh: "小的"}],
+            // 第七组
+            [{en: "play", zh: "玩"}, {en: "run", zh: "跑"}, {en: "jump", zh: "跳"}, {en: "eat", zh: "吃"}, {en: "drink", zh: "喝"}, {en: "sleep", zh: "睡觉"}],
+            // 第八组
+            [{en: "computer", zh: "电脑"}, {en: "phone", zh: "电话"}, {en: "table", zh: "桌子"}, {en: "chair", zh: "椅子"}, {en: "bed", zh: "床"}, {en: "door", zh: "门"}]
+        ];
+
+        let currentGame = [];
+        let selectedBubbles = [];
+        let matchedPairs = 0;
+        let startTime;
+        let timerInterval;
+        let gameWords = [];
+
+        // 生成随机颜色
+        function getRandomColor() {
+            const colors = [
+                'linear-gradient(135deg, #ff6b6b, #ee5a52)',
+                'linear-gradient(135deg, #4ecdc4, #44a08d)',
+                'linear-gradient(135deg, #45b7d1, #96c93d)',
+                'linear-gradient(135deg, #f093fb, #f5576c)',
+                'linear-gradient(135deg, #4facfe, #00f2fe)',
+                'linear-gradient(135deg, #43e97b, #38f9d7)',
+                'linear-gradient(135deg, #fa709a, #fee140)',
+                'linear-gradient(135deg, #a8edea, #fed6e3)',
+                'linear-gradient(135deg, #ff9a9e, #fecfef)',
+                'linear-gradient(135deg, #ffecd2, #fcb69f)',
+                'linear-gradient(135deg, #ff8a80, #ff5722)',
+                'linear-gradient(135deg, #81c784, #4caf50)',
+                'linear-gradient(135deg, #64b5f6, #2196f3)',
+                'linear-gradient(135deg, #ba68c8, #9c27b0)',
+                'linear-gradient(135deg, #ffb74d, #ff9800)',
+                'linear-gradient(135deg, #4db6ac, #009688)'
+            ];
+            return colors[Math.floor(Math.random() * colors.length)];
+        }
+
+        // 打乱数组
+        function shuffleArray(array) {
+            const newArray = [...array];
+            for (let i = newArray.length - 1; i > 0; i--) {
+                const j = Math.floor(Math.random() * (i + 1));
+                [newArray[i], newArray[j]] = [newArray[j], newArray[i]];
+            }
+            return newArray;
+        }
+
+        // 开始新游戏
+        function startNewGame() {
+            // 随机选择一个单词组
+            const randomGroup = wordPairs[Math.floor(Math.random() * wordPairs.length)];
+            gameWords = [...randomGroup];
+            
+            // 创建游戏数据（英文和中文配对）
+            currentGame = [];
+            gameWords.forEach((pair, index) => {
+                currentGame.push({
+                    id: index * 2,
+                    text: pair.en,
+                    type: 'en',
+                    pairId: index,
+                    matchText: pair.zh
+                });
+                currentGame.push({
+                    id: index * 2 + 1,
+                    text: pair.zh,
+                    type: 'zh',
+                    pairId: index,
+                    matchText: pair.en
+                });
+            });
+
+            // 打乱顺序
+            currentGame = shuffleArray(currentGame);
+            
+            // 重置游戏状态
+            selectedBubbles = [];
+            matchedPairs = 0;
+            startTime = Date.now();
+            
+            // 隐藏成功弹窗
+            document.getElementById('successModal').style.display = 'none';
+            
+            // 渲染游戏
+            renderGame();
+            startTimer();
+            updateProgress();
+        }
+
+        // 渲染游戏
+        function renderGame() {
+            const container = document.getElementById('gameContainer');
+            container.innerHTML = '';
+
+            currentGame.forEach((item, index) => {
+                const bubble = document.createElement('div');
+                bubble.className = 'bubble';
+                bubble.style.background = getRandomColor();
+                bubble.textContent = item.text;
+                bubble.dataset.id = item.id;
+                bubble.dataset.pairId = item.pairId;
+                bubble.dataset.type = item.type;
+                bubble.onclick = () => selectBubble(index);
+                container.appendChild(bubble);
+            });
+        }
+
+        // 选择泡泡
+        function selectBubble(index) {
+            const bubble = document.querySelectorAll('.bubble')[index];
+            const itemId = parseInt(bubble.dataset.id);
+
+            // 如果已经匹配或已经选中，则返回
+            if (bubble.classList.contains('matched') || 
+                selectedBubbles.some(b => parseInt(b.dataset.id) === itemId)) {
+                return;
+            }
+
+            // 如果已经选中了两个泡泡，先清除选择
+            if (selectedBubbles.length >= 2) {
+                clearSelection();
+            }
+
+            // 选中当前泡泡
+            bubble.classList.add('selected');
+            selectedBubbles.push(bubble);
+
+            // 如果选中了两个泡泡，检查是否匹配
+            if (selectedBubbles.length === 2) {
+                setTimeout(checkMatch, 500);
+            }
+        }
+
+        // 检查匹配
+        function checkMatch() {
+            const [bubble1, bubble2] = selectedBubbles;
+            const pairId1 = parseInt(bubble1.dataset.pairId);
+            const pairId2 = parseInt(bubble2.dataset.pairId);
+            const matchText1 = bubble1.dataset.matchText || getCurrentMatchText(bubble1);
+            const matchText2 = bubble2.dataset.matchText || getCurrentMatchText(bubble2);
+
+            // 简单的匹配逻辑：检查pairId或者文本内容是否匹配
+            const isMatch = (parseInt(bubble1.dataset.pairId) === parseInt(bubble2.dataset.pairId)) ||
+                           (bubble1.textContent.trim() === getCurrentMatchText(bubble2) && 
+                            bubble2.textContent.trim() === getCurrentMatchText(bubble1));
+
+            if (isMatch) {
+                // 匹配成功
+                bubble1.classList.add('matched');
+                bubble2.classList.add('matched');
+                matchedPairs++;
+                
+                setTimeout(() => {
+                    bubble1.style.visibility = 'hidden';
+                    bubble2.style.visibility = 'hidden';
+                }, 500);
+
+                if (matchedPairs === 6) {
+                    setTimeout(gameComplete, 600);
+                }
+            } else {
+                // 匹配失败
+                clearSelection();
+            }
+
+            updateProgress();
+        }
+
+        // 获取当前匹配文本（简化处理）
+        function getCurrentMatchText(bubble) {
+            const pairId = parseInt(bubble.dataset.pairId);
+            const item = gameWords.find(p => 
+                (p.en === bubble.textContent && p.zh !== bubble.textContent) || 
+                (p.zh === bubble.textContent && p.en !== bubble.textContent)
+            );
+            if (item) {
+                return item.en === bubble.textContent ? item.zh : item.en;
+            }
+            return '';
+        }
+
+        // 清除选择
+        function clearSelection() {
+            selectedBubbles.forEach(bubble => {
+                bubble.classList.remove('selected');
+            });
+            selectedBubbles = [];
+        }
+
+        // 更新进度
+        function updateProgress() {
+            document.getElementById('progress').textContent = `${matchedPairs}/6`;
+        }
+
+        // 开始计时器
+        function startTimer() {
+            timerInterval = setInterval(updateTimer, 1000);
+        }
+
+        // 更新计时器显示
+        function updateTimer() {
+            const elapsed = Math.floor((Date.now() - startTime) / 1000);
+            const minutes = Math.floor(elapsed / 60);
+            const seconds = elapsed % 60;
+            document.getElementById('timer').textContent = 
+                `${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
+        }
+
+        // 游戏完成
+        function gameComplete() {
+            clearInterval(timerInterval);
+            const elapsed = Math.floor((Date.now() - startTime) / 1000);
+            const minutes = Math.floor(elapsed / 60);
+            const seconds = elapsed % 60;
+            const timeString = `完成时间: ${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
+            
+            document.getElementById('successTime').textContent = timeString;
+            document.getElementById('successModal').style.display = 'flex';
+        }
+
+        // 初始化游戏
+        window.onload = function() {
+            startNewGame();
+        };
+    </script>
+</body>
+</html>
